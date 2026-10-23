@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hamseda</string>
+
+    <string name="loading">در حال بارگذاری…</string>
+    <string name="loading_slow">اتصالت ضعیفه؛ اینترنتت رو چک کن یا کمی صبر کن.</string>
+    <string name="refresh">رفرش صفحه</string>
+    <string name="check_again">بررسی دوباره</string>
+    <string name="still_offline">هنوز اینترنت وصل نیست</string>
+
+    <string name="error_offline_title">اینترنتت مشکل داره!</string>
+    <string name="error_offline_text">اتصال اینترنتت رو چک کن و صفحه رو رفرش کن.</string>
+    <string name="error_server_title">سرور در دسترس نیست</string>
+    <string name="error_server_text">چند لحظه دیگه دوباره امتحان کن.</string>
+    <string name="error_ssl_title">اتصال امن برقرار نشد</string>
+    <string name="error_ssl_text">اینترنت و تاریخ و ساعت گوشیت رو چک کن و دوباره امتحان کن.</string>
+
+    <string name="weak_title">اتصالت خیلی ضعیفه!</string>
+    <string name="weak_text">اتصال اینترنتت رو چک کن. با بهتر شدن اتصال، صفحه خودش درست می‌شه.</string>
+    <string name="weak_offline_title">اینترنتت مشکل داره!</string>
+    <string name="weak_offline_text">اتصالت قطع یا ناپایداره. اینترنتت رو چک کن.</string>
+
+    <string name="perm_intro_title">اجازه‌های لازم</string>
+    <string name="perm_intro_text">برای صحبت در اتاق‌ها، Hamseda به میکروفن، دوربین (برای وب‌کم) و اعلان‌ها نیاز داره. در مرحله بعد، از تو اجازه می‌گیریم.</string>
+    <string name="perm_continue">ادامه</string>
+    <string name="perm_denied_title">اجازه میکروفن لازمه</string>
+    <string name="perm_denied_text">برای صحبت در اتاق باید اجازه میکروفن رو از تنظیمات برنامه بدی.</string>
+    <string name="perm_open_settings">باز کردن تنظیمات</string>
+    <string name="perm_later">بعداً</string>
+
+    <string name="channel_room">اتاق فعال</string>
+    <string name="channel_room_desc">وقتی توی اتاق هستی و برنامه در پس‌زمینه‌ست</string>
+    <string name="channel_site">اعلان‌های Hamseda</string>
+    <string name="channel_site_desc">اعلان‌هایی که خود سایت می‌فرسته</string>
+    <string name="room_notification_text">هنوز توی اتاق هستی — اتاق در پس‌زمینه فعاله. برای برگشت لمس کن.</string>
+</resources>
