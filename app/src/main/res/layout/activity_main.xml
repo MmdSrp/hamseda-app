@@ -5,203 +5,268 @@
     android:layout_height="match_parent"
     android:background="@color/bg">
 
-    <WebView
-        android:id="@+id/webView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <!-- Weak / lost connection: page is blurred behind this card -->
+    <!-- Everything the user sees; padded so it never goes under the status bar / navigation bar -->
     <FrameLayout
-        android:id="@+id/weakView"
+        android:id="@+id/content"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/scrim"
-        android:clickable="true"
-        android:focusable="true"
-        android:visibility="gone">
+        android:layout_height="match_parent">
 
-        <LinearLayout
+        <WebView
+            android:id="@+id/webView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginLeft="28dp"
-            android:layout_marginRight="28dp"
-            android:background="@drawable/bg_card"
-            android:gravity="center_horizontal"
+            android:layout_height="match_parent" />
+
+        <!-- Weak / lost connection: the page is blurred behind this card -->
+        <FrameLayout
+            android:id="@+id/weakView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/scrim"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/weakCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="28dp"
+                android:layout_marginRight="28dp"
+                android:background="@drawable/bg_card"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <FrameLayout
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:background="@drawable/bg_icon_circle_warn">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_wifi_off"
+                        android:tint="@color/warn" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/weakTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:gravity="center"
+                    android:text="@string/weak_title"
+                    android:textColor="@color/text"
+                    android:textDirection="rtl"
+                    android:textSize="19sp" />
+
+                <TextView
+                    android:id="@+id/weakText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:lineSpacingMultiplier="1.25"
+                    android:text="@string/weak_text"
+                    android:textColor="@color/text2"
+                    android:textDirection="rtl"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/weakRetryButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/bg_button_ghost"
+                    android:minHeight="44dp"
+                    android:paddingLeft="28dp"
+                    android:paddingRight="28dp"
+                    android:text="@string/check_again"
+                    android:textAllCaps="false"
+                    android:textColor="@color/brand"
+                    android:textDirection="rtl"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Loading -->
+        <FrameLayout
+            android:id="@+id/loadingView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/bg"
+            android:clickable="true"
+            android:focusable="true">
+
+            <View
+                android:layout_width="380dp"
+                android:layout_height="380dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_glow" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="32dp">
+
+                <FrameLayout
+                    android:layout_width="220dp"
+                    android:layout_height="220dp"
+                    android:clipChildren="false">
+
+                    <View
+                        android:id="@+id/loadingRing1"
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:layout_gravity="center"
+                        android:alpha="0"
+                        android:background="@drawable/bg_ring" />
+
+                    <View
+                        android:id="@+id/loadingRing2"
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:layout_gravity="center"
+                        android:alpha="0"
+                        android:background="@drawable/bg_ring" />
+
+                    <ImageView
+                        android:id="@+id/loadingLogo"
+                        android:layout_width="104dp"
+                        android:layout_height="104dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/logo" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/loadingName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:letterSpacing="0.06"
+                    android:text="@string/app_name"
+                    android:textColor="@color/text"
+                    android:textSize="32sp" />
+
+                <TextView
+                    android:id="@+id/loadingTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/loading"
+                    android:textColor="@color/text2"
+                    android:textDirection="rtl"
+                    android:textSize="15sp" />
+
+                <ProgressBar
+                    android:id="@+id/loadingProgress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="180dp"
+                    android:layout_height="5dp"
+                    android:layout_marginTop="22dp"
+                    android:indeterminate="false"
+                    android:max="100"
+                    android:progressDrawable="@drawable/progress_loading" />
+
+                <TextView
+                    android:id="@+id/loadingHint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="26dp"
+                    android:gravity="center"
+                    android:text="@string/loading_slow"
+                    android:textColor="@color/warn"
+                    android:textDirection="rtl"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Error (no internet / server / secure connection) -->
+        <LinearLayout
+            android:id="@+id/errorView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="32dp"
+            android:visibility="gone">
 
             <FrameLayout
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:background="@drawable/bg_icon_circle_warn">
+                android:layout_width="104dp"
+                android:layout_height="104dp"
+                android:background="@drawable/bg_icon_circle">
 
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
                     android:layout_gravity="center"
                     android:contentDescription="@null"
                     android:src="@drawable/ic_wifi_off"
-                    android:tint="@color/warn" />
+                    android:tint="@color/brand" />
             </FrameLayout>
 
             <TextView
-                android:id="@+id/weakTitle"
+                android:id="@+id/errorTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="28dp"
                 android:gravity="center"
-                android:text="@string/weak_title"
+                android:text="@string/error_offline_title"
                 android:textColor="@color/text"
                 android:textDirection="rtl"
-                android:textSize="19sp"
-                android:textStyle="bold" />
+                android:textSize="22sp" />
 
             <TextView
-                android:id="@+id/weakText"
+                android:id="@+id/errorText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="10dp"
                 android:gravity="center"
-                android:lineSpacingMultiplier="1.2"
-                android:text="@string/weak_text"
+                android:lineSpacingMultiplier="1.3"
+                android:text="@string/error_offline_text"
                 android:textColor="@color/text2"
                 android:textDirection="rtl"
-                android:textSize="14sp" />
+                android:textSize="15sp" />
 
             <Button
-                android:id="@+id/weakRetryButton"
+                android:id="@+id/refreshButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/bg_button_ghost"
-                android:minHeight="44dp"
-                android:paddingLeft="28dp"
-                android:paddingRight="28dp"
-                android:text="@string/check_again"
+                android:layout_marginTop="32dp"
+                android:background="@drawable/bg_button"
+                android:minHeight="50dp"
+                android:paddingLeft="44dp"
+                android:paddingRight="44dp"
+                android:text="@string/refresh"
                 android:textAllCaps="false"
-                android:textColor="@color/text"
+                android:textColor="@color/white"
                 android:textDirection="rtl"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
         </LinearLayout>
     </FrameLayout>
 
-    <!-- Loading -->
-    <LinearLayout
-        android:id="@+id/loadingView"
+    <!-- Colour strips behind the transparent system bars; they follow the site's theme -->
+    <View
+        android:id="@+id/statusBg"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/bg"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="32dp">
+        android:layout_height="0dp"
+        android:layout_gravity="top" />
 
-        <ImageView
-            android:layout_width="96dp"
-            android:layout_height="96dp"
-            android:contentDescription="@null"
-            android:src="@drawable/logo" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:text="@string/loading"
-            android:textColor="@color/text"
-            android:textDirection="rtl"
-            android:textSize="17sp" />
-
-        <ProgressBar
-            android:id="@+id/loadingProgress"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="160dp"
-            android:layout_height="4dp"
-            android:layout_marginTop="16dp"
-            android:max="100"
-            android:progressBackgroundTint="#24FFFFFF"
-            android:progressTint="@color/brand" />
-
-        <TextView
-            android:id="@+id/loadingHint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:gravity="center"
-            android:text="@string/loading_slow"
-            android:textColor="@color/warn"
-            android:textDirection="rtl"
-            android:textSize="14sp"
-            android:visibility="gone" />
-    </LinearLayout>
-
-    <!-- Error (no internet / server / secure connection) -->
-    <LinearLayout
-        android:id="@+id/errorView"
+    <View
+        android:id="@+id/navBg"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/bg"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="32dp"
-        android:visibility="gone">
-
-        <FrameLayout
-            android:layout_width="104dp"
-            android:layout_height="104dp"
-            android:background="@drawable/bg_icon_circle">
-
-            <ImageView
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_gravity="center"
-                android:contentDescription="@null"
-                android:src="@drawable/ic_wifi_off"
-                android:tint="@color/brand" />
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/errorTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:gravity="center"
-            android:text="@string/error_offline_title"
-            android:textColor="@color/text"
-            android:textDirection="rtl"
-            android:textSize="22sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/errorText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:gravity="center"
-            android:lineSpacingMultiplier="1.25"
-            android:text="@string/error_offline_text"
-            android:textColor="@color/text2"
-            android:textDirection="rtl"
-            android:textSize="15sp" />
-
-        <Button
-            android:id="@+id/refreshButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:background="@drawable/bg_button"
-            android:minHeight="50dp"
-            android:paddingLeft="44dp"
-            android:paddingRight="44dp"
-            android:text="@string/refresh"
-            android:textAllCaps="false"
-            android:textColor="@color/text"
-            android:textDirection="rtl"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+        android:layout_height="0dp"
+        android:layout_gravity="bottom" />
 
 </FrameLayout>

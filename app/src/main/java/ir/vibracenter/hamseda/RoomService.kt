@@ -12,34 +12,40 @@ import android.os.PowerManager
 import androidx.core.content.ContextCompat
 
 /**
- * Keeps the app (and so the voice room) alive when the user leaves the screen.
- * While it runs, Android shows the "room is active in the background" notification
- * and allows the microphone / camera to keep working.
+ * Keeps the app alive while it is open (also in the background), so room invitations and site
+ * notifications keep arriving, and the microphone / camera keep working while you are inside a room.
+ * Android shows an ongoing notification for it ("اتاق در پس‌زمینه فعاله" inside a room, otherwise "Hamseda فعاله").
  */
 class RoomService : Service() {
+
+    companion object {
+        const val EXTRA_IN_ROOM = "in_room"
+    }
 
     private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val notification = NotificationHelper.roomNotification(this)
-        if (!startInForeground(notification)) {
+        val inRoom = intent?.getBooleanExtra(EXTRA_IN_ROOM, false) ?: false
+        val notification = NotificationHelper.roomNotification(this, inRoom)
+        if (!startInForeground(notification, inRoom)) {
             stopSelf()
             return START_NOT_STICKY
         }
-        acquireWakeLock()
+        if (inRoom) acquireWakeLock() else releaseWakeLock()
         return START_NOT_STICKY
     }
 
     private fun granted(permission: String): Boolean =
         ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 
-    private fun startInForeground(notification: Notification): Boolean {
+    private fun startInForeground(notification: Notification, inRoom: Boolean): Boolean {
         return try {
-            start(notification, fullTypes())
+            start(notification, types(inRoom))
             true
         } catch (e: Exception) {
+            if (!inRoom) return false
             try {
                 start(notification, mediaOnlyType())
                 true
@@ -60,8 +66,16 @@ class RoomService : Service() {
     private fun mediaOnlyType(): Int =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK else 0
 
-    private fun fullTypes(): Int {
+    private fun types(inRoom: Boolean): Int {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return 0
+        if (!inRoom) {
+            // idle: just waiting for invitations / notifications
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            } else {
+                0
+            }
+        }
         var t = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (granted(Manifest.permission.RECORD_AUDIO)) t = t or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
@@ -83,19 +97,23 @@ class RoomService : Service() {
         }
     }
 
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        // The user swiped the app away: the room is gone, so remove the notification too.
-        stopSelf()
-        super.onTaskRemoved(rootIntent)
-    }
-
-    override fun onDestroy() {
+    private fun releaseWakeLock() {
         try {
             if (wakeLock?.isHeld == true) wakeLock?.release()
         } catch (e: Exception) {
             // ignore
         }
         wakeLock = null
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // The user swiped the app away: it is closed for good, so remove the notification too.
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
+
+    override fun onDestroy() {
+        releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         super.onDestroy()
     }

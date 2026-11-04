@@ -3,7 +3,10 @@ package ir.vibracenter.hamseda
 /**
  * JavaScript injected into the Hamseda site only (document start, origin restricted):
  *  1. tracks WebRTC connections / live microphone streams so the app knows when you are inside a room
- *  2. replaces the web Notification API (not available in WebView) with real Android notifications
+ *  2. replaces the web Notification API (not available in WebView) with real Android notifications,
+ *     and offers window.HamsedaApp.notify({...}) so the site can send notifications / room invitations explicitly
+ *  3. reports the colours of the site's current theme (light / dark) so the phone's status bar,
+ *     bottom bar and notifications can follow it
  */
 object Scripts {
     const val BRIDGE = """
@@ -15,8 +18,9 @@ object Scripts {
   function post(o) {
     try { if (window.HamsedaNative) { window.HamsedaNative.postMessage(JSON.stringify(o)); } } catch (e) {}
   }
+  function str(v, n) { return v ? String(v).substring(0, n) : ''; }
 
-  // ---- room detection ----
+  // ---------------- room detection ----------------
   try {
     var NativePC = window.RTCPeerConnection || window.webkitRTCPeerConnection;
     if (NativePC && !NativePC.__hamsedaWrapped) {
@@ -68,8 +72,21 @@ object Scripts {
     return live.length > 0;
   };
 
-  // ---- notifications ----
-  function str(v, n) { return v ? String(v).substring(0, n) : ''; }
+  // ---------------- notifications ----------------
+  function send(title, o) {
+    o = o || {};
+    var d = o.data;
+    if (!d || typeof d !== 'object') { d = {}; }
+    post({
+      t: 'notify',
+      title: str(title, 100),
+      body: str(o.body, 300),
+      tag: str(o.tag, 64),
+      icon: str(o.icon, 500),
+      url: str(o.url || d.url || d.link || d.href, 500),
+      type: str(o.type || d.type, 20)
+    });
+  }
 
   function N(title, opts) {
     opts = opts || {};
@@ -78,9 +95,11 @@ object Scripts {
     this.tag = str(opts.tag, 64);
     this.data = opts.data;
     this.onclick = null; this.onclose = null; this.onerror = null; this.onshow = null;
-    post({ t: 'notify', title: this.title, body: this.body, tag: this.tag });
+    send(title, opts);
     var self = this;
-    setTimeout(function () { try { if (typeof self.onshow === 'function') { self.onshow(new Event('show')); } } catch (e) {} }, 0);
+    setTimeout(function () {
+      try { if (typeof self.onshow === 'function') { self.onshow(new Event('show')); } } catch (e) {}
+    }, 0);
   }
   N.prototype.close = function () { post({ t: 'close', tag: this.tag }); };
   N.prototype.addEventListener = function () {};
@@ -99,13 +118,126 @@ object Scripts {
   try {
     if (window.ServiceWorkerRegistration && ServiceWorkerRegistration.prototype) {
       ServiceWorkerRegistration.prototype.showNotification = function (title, opts) {
-        opts = opts || {};
-        post({ t: 'notify', title: str(title, 100), body: str(opts.body, 300), tag: str(opts.tag, 64) });
+        send(title, opts);
         return Promise.resolve();
       };
       ServiceWorkerRegistration.prototype.getNotifications = function () { return Promise.resolve([]); };
     }
   } catch (e) {}
+
+  // For the site's own code:  if (window.HamsedaApp) HamsedaApp.notify({ title, body, tag, url, icon, type: 'invite' })
+  // type 'invite' makes the phone ring.
+  try {
+    var App = {
+      isApp: true,
+      version: 2,
+      notify: function (o) { o = o || {}; send(o.title, o); },
+      ring: function (o) { o = o || {}; o.type = 'invite'; send(o.title, o); }
+    };
+    Object.defineProperty(window, 'HamsedaApp', { value: Object.freeze(App) });
+  } catch (e) {}
+
+  // ---------------- theme colours ----------------
+  var cv = null, cx = null;
+  function toRGBA(s) {
+    if (!s) { return null; }
+    try {
+      if (!cx) {
+        cv = document.createElement('canvas');
+        cv.width = 1; cv.height = 1;
+        cx = cv.getContext('2d', { willReadFrequently: true });
+      }
+      cx.clearRect(0, 0, 1, 1);
+      cx.fillStyle = '#000000';
+      cx.fillStyle = s;
+      cx.fillRect(0, 0, 1, 1);
+      var d = cx.getImageData(0, 0, 1, 1).data;
+      return { r: d[0], g: d[1], b: d[2], a: d[3] / 255 };
+    } catch (e) { return null; }
+  }
+  function hex(c) {
+    function h(n) { var s = n.toString(16); return s.length < 2 ? '0' + s : s; }
+    return '#' + h(c.r) + h(c.g) + h(c.b);
+  }
+  function solidBgOf(el) {
+    while (el && el.nodeType === 1) {
+      var c = toRGBA(getComputedStyle(el).backgroundColor);
+      if (c && c.a >= 0.95) { return c; }
+      el = el.parentElement;
+    }
+    return null;
+  }
+  function solidBgAt(x, y) {
+    var el = null;
+    try { el = document.elementFromPoint(x, y); } catch (e) {}
+    return solidBgOf(el);
+  }
+  function metaTheme() {
+    var ms = document.querySelectorAll('meta[name="theme-color"]'), pick = null, i;
+    for (i = 0; i < ms.length; i++) {
+      var media = ms[i].getAttribute('media');
+      if (media) {
+        try { if (window.matchMedia(media).matches) { pick = ms[i]; break; } } catch (e) {}
+      } else if (!pick) { pick = ms[i]; }
+    }
+    return pick ? toRGBA(pick.getAttribute('content')) : null;
+  }
+  function accentColor() {
+    var names = ['--primary', '--accent', '--brand', '--color-primary', '--primary-color', '--main-color', '--theme-color'];
+    var cs = getComputedStyle(document.documentElement), i, c;
+    for (i = 0; i < names.length; i++) {
+      c = toRGBA(cs.getPropertyValue(names[i]).trim());
+      if (c && c.a >= 0.95) { return c; }
+    }
+    return metaTheme();
+  }
+
+  var last = '';
+  function report() {
+    try {
+      if (!document.body) { return; }
+      var w = window.innerWidth || 360, h = window.innerHeight || 640;
+      var dark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var fb = metaTheme() || (dark ? { r: 10, g: 16, b: 30, a: 1 } : { r: 255, g: 255, b: 255, a: 1 });
+      var bg = solidBgOf(document.body) || solidBgOf(document.documentElement) || fb;
+      var top = solidBgAt(w / 2, 2) || bg;
+      var bottom = solidBgAt(w / 2, h - 3) || bg;
+      var accent = accentColor();
+      var msg = { t: 'theme', bg: hex(bg), top: hex(top), bottom: hex(bottom), accent: accent ? hex(accent) : '' };
+      var key = JSON.stringify(msg);
+      if (key !== last) { last = key; post(msg); }
+    } catch (e) {}
+  }
+
+  var timer = null;
+  function schedule() {
+    if (timer) { clearTimeout(timer); }
+    timer = setTimeout(report, 150);
+  }
+
+  function start() {
+    schedule();
+    try {
+      var mo = new MutationObserver(schedule);
+      var attrs = ['class', 'style', 'data-theme', 'data-bs-theme', 'data-color-scheme', 'data-mode'];
+      mo.observe(document.documentElement, { attributes: true, attributeFilter: attrs });
+      if (document.body) { mo.observe(document.body, { attributes: true, attributeFilter: attrs }); }
+      if (document.head) { mo.observe(document.head, { childList: true, subtree: true, attributes: true, attributeFilter: ['content'] }); }
+    } catch (e) {}
+    try {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      if (mq.addEventListener) { mq.addEventListener('change', schedule); }
+    } catch (e) {}
+    window.addEventListener('load', function () { schedule(); setTimeout(report, 800); setTimeout(report, 2000); });
+    document.addEventListener('visibilitychange', schedule);
+    document.addEventListener('click', function () { setTimeout(report, 350); }, true);
+    setInterval(function () { if (!document.hidden) { report(); } }, 4000);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
 })();
 """
 

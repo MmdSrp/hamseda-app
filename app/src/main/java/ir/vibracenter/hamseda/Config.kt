@@ -1,5 +1,7 @@
 package ir.vibracenter.hamseda
 
+import android.net.Uri
+
 object Config {
     const val HOST = "hamseda.vibracenter.ir"
     const val ORIGIN = "https://hamseda.vibracenter.ir"
@@ -11,6 +13,16 @@ object Config {
 
     /** true = site notifications are shown even while the app is open on screen. */
     const val NOTIFY_WHEN_FOREGROUND = true
+
+    /**
+     * true = while the app is open (even in the background) a small ongoing notification keeps it alive,
+     * so room invitations and site notifications still arrive. Swiping the app away or tapping
+     * "خروج" in that notification turns it off.
+     */
+    const val KEEP_ALIVE = true
+
+    /** How long an invitation keeps ringing (ms). */
+    const val INVITE_RING_MS = 30_000L
 
     /** Connection quality check: a reply slower than this (ms) counts as "very weak". */
     const val WEAK_LATENCY_MS = 3500L
@@ -25,5 +37,34 @@ object Config {
         if (host == null) return false
         val h = host.lowercase()
         return h == ROOT_DOMAIN || h.endsWith(".$ROOT_DOMAIN")
+    }
+
+    /**
+     * A link coming from a notification. Only pages of the Hamseda site are accepted
+     * ("/room/12" style paths are resolved against the site).
+     */
+    fun resolveAppUrl(raw: String?): String? {
+        if (raw.isNullOrBlank() || raw.length > 2048) return null
+        val u = raw.trim()
+        val full = if (u.startsWith("/") && !u.startsWith("//")) ORIGIN + u else u
+        val uri = try {
+            Uri.parse(full)
+        } catch (e: Exception) {
+            return null
+        }
+        return if (uri.scheme == "https" && uri.host == HOST) full else null
+    }
+
+    /** Notification pictures may only come from the site's own domain. */
+    fun resolveIconUrl(raw: String?): String? {
+        if (raw.isNullOrBlank() || raw.length > 2048) return null
+        val u = raw.trim()
+        val full = if (u.startsWith("/") && !u.startsWith("//")) ORIGIN + u else u
+        val uri = try {
+            Uri.parse(full)
+        } catch (e: Exception) {
+            return null
+        }
+        return if (uri.scheme == "https" && isTrustedHost(uri.host)) full else null
     }
 }

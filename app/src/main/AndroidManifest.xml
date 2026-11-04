@@ -10,12 +10,14 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
-    <!-- Notifications + keeping the room alive in the background -->
+    <!-- Notifications, invitation ring, keeping the room / invitations alive in the background -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
@@ -48,7 +50,15 @@
         <service
             android:name=".RoomService"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback|microphone|camera" />
+            android:foregroundServiceType="mediaPlayback|microphone|camera|specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the voice chat app connected while it is in the background, so room invitations and notifications can be received" />
+        </service>
+
+        <receiver
+            android:name=".RingActionReceiver"
+            android:exported="false" />
 
     </application>
 

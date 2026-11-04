@@ -2,7 +2,8 @@
 <resources>
     <string name="app_name">Hamseda</string>
 
-    <string name="loading">در حال بارگذاری…</string>
+    <string name="loading">در حال بارگذاری...</string>
+    <string name="loading_base">در حال بارگذاری</string>
     <string name="loading_slow">اتصالت ضعیفه؛ اینترنتت رو چک کن یا کمی صبر کن.</string>
     <string name="refresh">رفرش صفحه</string>
     <string name="check_again">بررسی دوباره</string>
@@ -28,9 +29,19 @@
     <string name="perm_open_settings">باز کردن تنظیمات</string>
     <string name="perm_later">بعداً</string>
 
-    <string name="channel_room">اتاق فعال</string>
-    <string name="channel_room_desc">وقتی توی اتاق هستی و برنامه در پس‌زمینه‌ست</string>
+    <string name="channel_room">فعال بودن Hamseda</string>
+    <string name="channel_room_desc">وقتی Hamseda باز مونده و دعوت‌ها و پیام‌ها رو دریافت می‌کنه، یا توی اتاق هستی</string>
     <string name="channel_site">اعلان‌های Hamseda</string>
     <string name="channel_site_desc">اعلان‌هایی که خود سایت می‌فرسته</string>
+    <string name="channel_invite">دعوت به اتاق</string>
+    <string name="channel_invite_desc">وقتی کسی تو رو به اتاق دعوت می‌کنه (با زنگ)</string>
+
     <string name="room_notification_text">هنوز توی اتاق هستی — اتاق در پس‌زمینه فعاله. برای برگشت لمس کن.</string>
+    <string name="idle_notification_text">Hamseda فعاله و دعوت‌ها و اعلان‌ها رو دریافت می‌کنه.</string>
+    <string name="notif_quit">خروج</string>
+
+    <string name="invite_default_title">دعوت به اتاق</string>
+    <string name="invite_default_text">یکی تو رو به یه اتاق دعوت کرده.</string>
+    <string name="invite_join">پیوستن</string>
+    <string name="invite_decline">رد کردن</string>
 </resources>
