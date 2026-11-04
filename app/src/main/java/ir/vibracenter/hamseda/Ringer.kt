@@ -55,7 +55,7 @@ object Ringer {
                                 if (loop) AudioAttributes.USAGE_NOTIFICATION_RINGTONE
                                 else AudioAttributes.USAGE_NOTIFICATION
                             )
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIC)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                             .build()
                     )
                     if (loop && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) r.setLooping(true)
