@@ -38,14 +38,24 @@ if (window.HamsedaApp) {
 1. توی ریپوی گیت‌هاب: Settings ← Secrets and variables ← Actions ← New repository secret
 2. چهار Secret بساز: `KEYSTORE_BASE64`، `KEYSTORE_PASSWORD`، `KEY_ALIAS`، `KEY_PASSWORD` (مقدارها توی فایل `GITHUB-SECRETS.txt`)
 3. Actions ← Build APK ← Run workflow
-4. از Artifacts فایل `Hamseda-release-signed` رو دانلود کن:
-   - `app-release.apk` برای کافه‌بازار و مایکت
-   - `app-release.aab` برای گوگل‌پلی
+4. پایین صفحه‌ی همون اجرا، بخش Artifacts، دو تا فایل هست (روی اسمشون بزن تا زیپ دانلود بشه، بازش کن):
+   - `Hamseda-APK-for-Bazaar-Myket` ← داخلش `Hamseda-release.apk` برای کافه‌بازار و مایکت
+   - `Hamseda-AAB-for-GooglePlay` ← داخلش `Hamseda-release.aab` برای گوگل‌پلی
+
+اگه پیغام «بسته نباید با کلید دیباگ امضا شده باشد» اومد، یعنی فایل اشتباه آپلود شده یا workflow قدیمی توی ریپو مونده. پوشه‌ی `.github` چون با نقطه شروع می‌شه، موقع آپلود گاهی جا می‌مونه. توی گیت‌هاب فایل `.github/workflows/build-apk.yml` رو باز کن؛ اولین مرحله‌ش باید «Check signing secrets are set» باشه. اگه نبود، با Add file ← Create new file و نوشتن مسیر کامل `.github/workflows/build-apk.yml` محتوای جدید رو بچسبون.
 
 فایل `.jks` و `GITHUB-SECRETS.txt` رو هیچ‌وقت توی ریپو آپلود نکن (`.gitignore` جلوش رو می‌گیره) و یه نسخه‌ی پشتیبان جای امن نگه دار. با گم شدنش دیگه نمی‌تونی آپدیت اپ رو توی استورها منتشر کنی.
 هر بار ساخت، شماره‌ی نسخه (versionCode) خودکار بیشتر می‌شه، پس هر آپلود جدید از قبلی بالاتره.
 
-اگه Secretها ست نشن، workflow فقط نسخه‌ی debug برای تست می‌سازه (استورها رد می‌کنن).
+اگه Secretها ست نشن یا اشتباه باشن، workflow با یه پیغام قرمز واضح متوقف می‌شه (دیگه بی‌صدا نسخه‌ی debug نمی‌سازه). بعد از ساخت موفق، توی صفحه‌ی خلاصه‌ی اجرا نوشته می‌شه «Signed with the Hamseda release key» و اثرانگشت امضا.
+
+## اگه موقع نصب نوشت «App not installed as package conflicts with an existing package»
+یعنی روی گوشی یه Hamseda با امضای دیگه (نسخه‌ی debug قبلی) نصبه و اندروید اجازه‌ی جایگزینی نمی‌ده. فقط یک بار لازمه پاکش کنی:
+1. Settings ← Apps ← Hamseda ← Uninstall (اگه گزینه‌ی «برای همه کاربران» بود، اون رو بزن)
+2. گوشی‌های شیائومی: «Dual apps / Second space» و پروفایل کاری رو هم چک کن؛ نسخه‌ی اونجا هم باید پاک بشه
+3. بعد `app-release.apk` رو نصب کن
+
+از این به بعد همه‌ی نسخه‌ها با همین یک کلید امضا می‌شن و روی هم آپدیت می‌شن، بدون پاک کردن.
 
 ## تنظیمات
 فایل `app/src/main/java/ir/vibracenter/hamseda/Config.kt`:
