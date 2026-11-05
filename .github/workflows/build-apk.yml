@@ -12,43 +12,32 @@ jobs:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-java@v5
-        id: java
         with:
           distribution: temurin
           java-version: 17
 
       - uses: gradle/actions/setup-gradle@v5
-        id: gradle
         with:
           gradle-version: 8.14.3
 
-      - name: Accept Android SDK licenses
-        id: licenses
-        run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Build signed release (APK + AAB)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: bash ci/build-release.sh
 
-      - name: Build debug APK
-        id: build
-        run: |
-          set -o pipefail
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
-
-      - name: Show build error
-        if: failure()
-        run: |
-          touch build.log
-          {
-            echo "steps: java=${{ steps.java.outcome }} gradle=${{ steps.gradle.outcome }} licenses=${{ steps.licenses.outcome }} build=${{ steps.build.outcome }}"
-            echo "files: $(ls -A | tr '\n' ' ')"
-            grep -E -A12 -m3 "What went wrong|^e: |error:" build.log || true
-            echo "--- last lines ---"
-            tail -15 build.log || true
-          } > summary.txt
-          msg=$(sed 's/%/%25/g' summary.txt | awk '{printf "%s%%0A", $0}')
-          echo "::error title=Build failed::${msg}"
-
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK (Cafe Bazaar, Myket)
+        uses: actions/upload-artifact@v4
         with:
-          name: Hamseda-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: Hamseda-APK-for-Bazaar-Myket
+          path: dist/apk/Hamseda-release.apk
+          if-no-files-found: error
+
+      - name: Upload AAB (Google Play)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hamseda-AAB-for-GooglePlay
+          path: dist/aab/Hamseda-release.aab
+          if-no-files-found: error
