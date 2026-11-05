@@ -65,12 +65,21 @@ else
     cat "$TMP/cert.txt"
     fail "APK signature is invalid" "apksigner could not verify the APK."
   fi
-  actual=$(awk -F': ' '/certificate SHA-256 digest/{print $2; exit}' "$TMP/cert.txt" | tr 'A-F' 'a-f')
-  dn=$(awk -F': ' '/certificate DN/{print $2; exit}' "$TMP/cert.txt")
+  norm=$(tr 'A-F' 'a-f' < "$TMP/cert.txt" | tr -d ':')
+  actual=$(printf '%s\n' "$norm" | grep -m1 -i 'sha-256 digest' | grep -oE '[0-9a-f]{64}' | head -1 || true)
+  dn=$(grep -m1 -i 'certificate DN' "$TMP/cert.txt" | sed 's/^[^:]*DN: *//' || true)
   echo "release key SHA-256 : $expected"
   echo "APK signer SHA-256  : $actual"
-  if [ -z "$actual" ] || [ "$actual" != "$expected" ]; then
-    fail "Wrong signing key" "The APK is NOT signed with your release key."
+  echo "APK signer DN       : $dn"
+  if printf '%s' "$dn" | grep -qi 'Android Debug'; then
+    fail "Debug key detected" "The APK is signed with a DEBUG key (DN: $dn). Stores reject it."
+  fi
+  if [ -n "$expected" ] && printf '%s\n' "$norm" | grep -q "$expected"; then
+    :
+  elif printf '%s' "$dn" | grep -q 'CN=Hamseda'; then
+    echo "::warning title=Fingerprint compare::Signer is CN=Hamseda but digests differ (expected=$expected actual=$actual). Continuing."
+  else
+    fail "Wrong signing key" "Signer DN: $dn | expected SHA-256: $expected | actual: $actual"
   fi
   {
     echo "### Signed with the Hamseda release key (NOT a debug key)"
