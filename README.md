@@ -42,7 +42,7 @@ if (window.HamsedaApp) {
    - `Hamseda-APK-for-Bazaar-Myket` ← داخلش `Hamseda-release.apk` برای کافه‌بازار و مایکت
    - `Hamseda-AAB-for-GooglePlay` ← داخلش `Hamseda-release.aab` برای گوگل‌پلی
 
-اگه پیغام «بسته نباید با کلید دیباگ امضا شده باشد» اومد، یعنی فایل اشتباه آپلود شده یا workflow قدیمی توی ریپو مونده. پوشه‌ی `.github` چون با نقطه شروع می‌شه، موقع آپلود گاهی جا می‌مونه. توی گیت‌هاب فایل `.github/workflows/build-apk.yml` رو باز کن؛ اولین مرحله‌ش باید «Check signing secrets are set» باشه. اگه نبود، با Add file ← Create new file و نوشتن مسیر کامل `.github/workflows/build-apk.yml` محتوای جدید رو بچسبون.
+منطق ساخت توی `ci/build-release.sh` هست (با زیپ آپدیت می‌شه). فایل `.github/workflows/build-apk.yml` فقط کوتاهه و باید یک بار دستی توی سایت گیت‌هاب جایگزین بشه، چون پوشه‌ی `.github` موقع آپلود زیپ گاهی جا می‌مونه: فایلش رو باز کن ← مداد ← کل محتوا رو پاک کن و محتوای جدید رو بچسبون ← Commit. اولین مرحله‌ی ساخت باید «Build signed release (APK + AAB)» باشه. اگه ارور «A DEBUG build was requested on GitHub» اومد، یعنی هنوز workflow قدیمی توی ریپوئه.
 
 فایل `.jks` و `GITHUB-SECRETS.txt` رو هیچ‌وقت توی ریپو آپلود نکن (`.gitignore` جلوش رو می‌گیره) و یه نسخه‌ی پشتیبان جای امن نگه دار. با گم شدنش دیگه نمی‌تونی آپدیت اپ رو توی استورها منتشر کنی.
 هر بار ساخت، شماره‌ی نسخه (versionCode) خودکار بیشتر می‌شه، پس هر آپلود جدید از قبلی بالاتره.
