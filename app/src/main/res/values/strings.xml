@@ -44,4 +44,11 @@
     <string name="invite_default_text">یکی تو رو به یه اتاق دعوت کرده.</string>
     <string name="invite_join">پیوستن</string>
     <string name="invite_decline">رد کردن</string>
+
+    <string name="close">باشه</string>
+    <string name="bazaar_missing_title">برنامه‌ی بازار لازمه</string>
+    <string name="bazaar_missing_text">پرداخت داخل Hamseda از طریق کافه‌بازار انجام می‌شه. برنامه‌ی بازار رو نصب کن، واردش شو و دوباره امتحان کن.</string>
+    <string name="bazaar_install">نصب بازار</string>
+    <string name="pay_blocked_title">پرداخت فقط از طریق بازار</string>
+    <string name="pay_blocked_text">پرداخت داخل برنامه از طریق کافه‌بازار انجام می‌شه. از دکمه‌ی خرید داخل برنامه استفاده کن.</string>
 </resources>

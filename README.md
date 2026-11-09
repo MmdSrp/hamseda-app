@@ -57,6 +57,30 @@ if (window.HamsedaApp) {
 
 از این به بعد همه‌ی نسخه‌ها با همین یک کلید امضا می‌شن و روی هم آپدیت می‌شن، بدون پاک کردن.
 
+## پرداخت با کافه‌بازار
+تمام پرداخت‌های داخل برنامه باید با بازار انجام بشه. درگاه‌های بانکی (زیبال، زرین‌پال و...) توی برنامه باز نمی‌شن و پیغام «پرداخت فقط از طریق بازار» میاد.
+
+۱. کلید RSA و محصول‌ها (`35324`، `3534345`، `245220`) توی `Config.kt` گذاشته شدن. محصول جدید رو توی `BAZAAR_PRODUCTS` اضافه کن. کلید JWT رو هیچ‌وقت توی برنامه نذار؛ فقط برای سروره.
+۲. توی کد سایت، دکمه‌ی خرید رو این‌طوری کن:
+
+```js
+function buy(sku, type) {            // type: 'inapp' (تکی) یا 'subscription' (اشتراک)
+  if (window.HamsedaApp && HamsedaApp.billing === 'bazaar') {
+    HamsedaApp.buy({ sku: sku, payload: 'user-' + USER_ID });  // نوع (اشتراکی/تکی) از روی لیست محصول‌ها تعیین می‌شه
+  } else {
+    location.href = '/pay?sku=' + sku;   // مرورگر / وب: همون روش قبلی
+  }
+}
+window.addEventListener('hamseda-purchase', function (e) {
+  var r = e.detail;                    // {ok, status, sku, orderId, purchaseToken, payload, signature}
+  if (r.status === 'success') {
+    // purchaseToken رو بفرست سرور، با API بازار تایید کن و اشتراک/سکه رو فعال کن
+  } else if (r.status === 'canceled') { /* کاربر انصراف داد */ }
+});
+```
+۳. سرور باید `purchaseToken` رو با API بازار تایید کنه، نه فقط به پیغام برنامه اعتماد کنه.
+۴. `HamsedaApp.restore()` خریدهای قبلی رو می‌خونه. `HamsedaApp.consume(token)` برای محصول تکی بعد از تحویل، تا دوباره قابل خرید بشه (یا `consume: true` موقع خرید).
+
 ## تنظیمات
 فایل `app/src/main/java/ir/vibracenter/hamseda/Config.kt`:
 - `BLOCK_SCREENSHOTS`: `true` یعنی اسکرین‌شات از اپ گرفته نمی‌شه

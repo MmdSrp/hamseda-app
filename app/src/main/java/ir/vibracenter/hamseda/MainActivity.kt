@@ -80,6 +80,7 @@ class MainActivity : AppCompatActivity() {
         const val EXTRA_QUIT = "hamseda_quit"
         const val EXTRA_STOP_RING = "hamseda_stop_ring"
 
+        private val SKU_RE = Regex("^[A-Za-z0-9_.\\-]{1,64}\$")
         private val HEX_REGEX = Regex("^#[0-9a-fA-F]{6}\$")
         private val INVITE_REGEX = Regex("invite|invitation|\\bcall\\b|\\bring\\b|دعوت|زنگ", RegexOption.IGNORE_CASE)
     }
@@ -125,6 +126,8 @@ class MainActivity : AppCompatActivity() {
     private var pageLoaded = false
     private var mainFrameError = false
     private var inForeground = false
+
+    private val billing by lazy { BazaarBilling(this) { deliverBilling(it) } }
     private var roomActive = false
     private var serviceRunning = false
     private var consecutiveBad = 0
@@ -382,6 +385,7 @@ class MainActivity : AppCompatActivity() {
         themeAnimator?.cancel()
         Ringer.stop()
         if (initialized) {
+            billing.release()
             stopRoomService()
             roomActive = false
             serviceRunning = false
@@ -558,6 +562,10 @@ class MainActivity : AppCompatActivity() {
                 val uri = request.url
                 val scheme = uri.scheme?.lowercase()
                 if (scheme == "about" || scheme == "blob") return false
+                if (Config.isPaymentHost(uri.host)) {
+                    showPaymentBlocked()
+                    return true
+                }
                 if (scheme == "https" && Config.isTrustedHost(uri.host)) return false
                 if (scheme == "https" || scheme == "mailto" || scheme == "tel") {
                     openExternal(uri)
@@ -990,7 +998,47 @@ class MainActivity : AppCompatActivity() {
             "notify" -> handleNotify(o)
             "close" -> NotificationHelper.cancelSite(this, o.optString("tag").take(64))
             "theme" -> handleTheme(o)
+            "buy" -> {
+                val sku = o.optString("sku")
+                val type = Config.BAZAAR_PRODUCTS[sku]
+                if (type != null && SKU_RE.matches(sku)) {
+                    billing.buy(sku, type, o.optString("payload").take(200), o.optBoolean("consume"))
+                }
+            }
+            "restore" -> billing.restore()
+            "consume" -> o.optString("token").takeIf { it.length in 1..512 }?.let { billing.consume(it) }
         }
+    }
+
+    /** Sends a purchase result back to the site (only while the Hamseda page is open). */
+    private fun deliverBilling(result: JSONObject) {
+        if (isDestroyed || !::webView.isInitialized) return
+        if (Uri.parse(webView.url ?: "").host != Config.HOST) return
+        webView.evaluateJavascript(
+            "(function(d){try{window.dispatchEvent(new CustomEvent('hamseda-purchase',{detail:d}));" +
+                "if(typeof window.onHamsedaPurchase==='function'){window.onHamsedaPurchase(d);}}catch(e){}})(" +
+                result.toString() + ")", null
+        )
+        if (result.optString("status") == "unavailable") {
+            showDialog(
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.bazaar_missing_title)
+                    .setMessage(R.string.bazaar_missing_text)
+                    .setPositiveButton(R.string.bazaar_install) { _, _ ->
+                        openExternal(Uri.parse("https://cafebazaar.ir/app/com.farsitel.bazaar"))
+                    }
+                    .setNegativeButton(R.string.close, null)
+            )
+        }
+    }
+
+    private fun showPaymentBlocked() {
+        showDialog(
+            AlertDialog.Builder(this)
+                .setTitle(R.string.pay_blocked_title)
+                .setMessage(R.string.pay_blocked_text)
+                .setPositiveButton(R.string.close, null)
+        )
     }
 
     private fun handleNotify(o: JSONObject) {

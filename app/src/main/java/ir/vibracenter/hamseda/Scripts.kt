@@ -132,7 +132,17 @@ object Scripts {
       isApp: true,
       version: 2,
       notify: function (o) { o = o || {}; send(o.title, o); },
-      ring: function (o) { o = o || {}; o.type = 'invite'; send(o.title, o); }
+      ring: function (o) { o = o || {}; o.type = 'invite'; send(o.title, o); },
+      billing: 'bazaar',
+      // HamsedaApp.buy({ sku:'vip_month', type:'subscription' | 'inapp', payload:'user-12', consume:false })
+      // result: window.addEventListener('hamseda-purchase', e => e.detail)  (or window.onHamsedaPurchase)
+      buy: function (o) {
+        o = o || {};
+        post({ t: 'buy', sku: str(o.sku, 64), type: o.type === 'subscription' ? 'subscription' : 'inapp',
+               payload: str(o.payload, 200), consume: !!o.consume });
+      },
+      restore: function () { post({ t: 'restore' }); },
+      consume: function (token) { post({ t: 'consume', token: str(token, 512) }); }
     };
     Object.defineProperty(window, 'HamsedaApp', { value: Object.freeze(App) });
   } catch (e) {}
