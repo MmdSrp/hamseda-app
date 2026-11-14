@@ -1003,6 +1003,9 @@ class MainActivity : AppCompatActivity() {
                 val type = Config.BAZAAR_PRODUCTS[sku]
                 if (type != null && SKU_RE.matches(sku)) {
                     billing.buy(sku, type, o.optString("payload").take(200), o.optBoolean("consume"))
+                } else {
+                    // never leave the site waiting: tell it this product id is not allowed / unknown
+                    deliverBilling(JSONObject().put("ok", false).put("status", "failed").put("sku", sku).put("error", "unknown_sku"))
                 }
             }
             "restore" -> billing.restore()

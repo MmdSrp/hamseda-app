@@ -1,5 +1,6 @@
 package ir.vibracenter.hamseda
 
+import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import ir.cafebazaar.poolakey.Connection
 import ir.cafebazaar.poolakey.Payment
@@ -20,6 +21,7 @@ class BazaarBilling(
     private var payment: Payment? = null
     private var connection: Connection? = null
     private var busy = false
+    private var busySince = 0L
 
     private fun ensurePayment(): Payment {
         payment?.let { return it }
@@ -56,8 +58,14 @@ class BazaarBilling(
     }
 
     fun buy(sku: String, type: String, payload: String, consume: Boolean) {
-        if (busy) return
+        val now = SystemClock.elapsedRealtime()
+        // A purchase that never answered must not block the button forever: after 2 minutes a new try is allowed.
+        if (busy && now - busySince < 120_000L) {
+            result("failed", sku, type) { it.put("error", "busy") }
+            return
+        }
         busy = true
+        busySince = now
         val finish = { busy = false }
         withConnection(fail = { finish(); result("unavailable", sku, type) { it.put("error", "bazaar_unavailable") } }) { p ->
             val request = PurchaseRequest(productId = sku, payload = payload)
@@ -71,6 +79,7 @@ class BazaarBilling(
                         it.put("payload", purchase.payload)
                         it.put("purchaseTime", purchase.purchaseTime)
                         it.put("signature", purchase.dataSignature)
+                        it.put("originalJson", purchase.originalJson)
                     }
                     if (consume && type != "subscription") consume(token)
                 }
@@ -97,7 +106,7 @@ class BazaarBilling(
             p.getPurchasedProducts {
                 querySucceed { items ->
                     items.forEach {
-                        list.put(JSONObject().put("sku", it.productId).put("type", "inapp").put("purchaseToken", it.purchaseToken).put("orderId", it.orderId).put("purchaseTime", it.purchaseTime))
+                        list.put(JSONObject().put("sku", it.productId).put("type", "inapp").put("purchaseToken", it.purchaseToken).put("orderId", it.orderId).put("purchaseTime", it.purchaseTime).put("payload", it.payload).put("signature", it.dataSignature).put("originalJson", it.originalJson))
                     }
                     done()
                 }
@@ -106,7 +115,7 @@ class BazaarBilling(
             p.getSubscribedProducts {
                 querySucceed { items ->
                     items.forEach {
-                        list.put(JSONObject().put("sku", it.productId).put("type", "subscription").put("purchaseToken", it.purchaseToken).put("orderId", it.orderId).put("purchaseTime", it.purchaseTime))
+                        list.put(JSONObject().put("sku", it.productId).put("type", "subscription").put("purchaseToken", it.purchaseToken).put("orderId", it.orderId).put("purchaseTime", it.purchaseTime).put("payload", it.payload).put("signature", it.dataSignature).put("originalJson", it.originalJson))
                     }
                     done()
                 }
