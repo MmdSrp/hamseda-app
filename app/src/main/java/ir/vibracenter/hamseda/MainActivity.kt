@@ -35,6 +35,7 @@ import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
+import android.webkit.JavascriptInterface
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
 import android.webkit.RenderProcessGoneDetail
@@ -554,6 +555,8 @@ class MainActivity : AppCompatActivity() {
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             WebViewCompat.addDocumentStartJavaScript(webView, Scripts.BRIDGE, setOf(Config.ORIGIN))
         }
+        // Second, independent way for the site to reach Bazaar billing: works on every WebView version.
+        webView.addJavascriptInterface(PayJs(), "HamsedaPay")
 
         webView.webViewClient = object : WebViewClient() {
 
@@ -1001,10 +1004,11 @@ class MainActivity : AppCompatActivity() {
             "buy" -> {
                 val sku = o.optString("sku")
                 val type = Config.BAZAAR_PRODUCTS[sku]
+                deliverBilling(JSONObject().put("ok", true).put("status", "ack").put("sku", sku))
                 if (type != null && SKU_RE.matches(sku)) {
                     billing.buy(sku, type, o.optString("payload").take(200), o.optBoolean("consume"))
                 } else {
-                    // never leave the site waiting: tell it this product id is not allowed / unknown
+                    // never leave the site waiting: this product id is not allowed / unknown
                     deliverBilling(JSONObject().put("ok", false).put("status", "failed").put("sku", sku).put("error", "unknown_sku"))
                 }
             }
@@ -1023,15 +1027,64 @@ class MainActivity : AppCompatActivity() {
                 result.toString() + ")", null
         )
         if (result.optString("status") == "unavailable") {
-            showDialog(
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.bazaar_missing_title)
-                    .setMessage(R.string.bazaar_missing_text)
-                    .setPositiveButton(R.string.bazaar_install) { _, _ ->
-                        openExternal(Uri.parse("https://cafebazaar.ir/app/com.farsitel.bazaar"))
-                    }
-                    .setNegativeButton(R.string.close, null)
-            )
+            val installed = result.optJSONObject("bazaar")?.optBoolean("installed", true) ?: true
+            if (!installed) {
+                showDialog(
+                    AlertDialog.Builder(this)
+                        .setTitle(R.string.bazaar_missing_title)
+                        .setMessage(R.string.bazaar_missing_text)
+                        .setPositiveButton(R.string.bazaar_install) { _, _ ->
+                            openExternal(Uri.parse("https://cafebazaar.ir/app/com.farsitel.bazaar"))
+                        }
+                        .setNegativeButton(R.string.close, null)
+                )
+            } else {
+                // Bazaar is installed but its billing service did not answer: do NOT say "install Bazaar".
+                showDialog(
+                    AlertDialog.Builder(this)
+                        .setTitle(R.string.bazaar_connect_title)
+                        .setMessage(R.string.bazaar_connect_text)
+                        .setPositiveButton(R.string.bazaar_open) { _, _ ->
+                            try {
+                                packageManager.getLaunchIntentForPackage(BazaarBilling.BAZAAR_PKG)?.let { startActivity(it) }
+                            } catch (e: Exception) {
+                                // ignore
+                            }
+                        }
+                        .setNegativeButton(R.string.close, null)
+                )
+            }
+        }
+    }
+
+    /** window.HamsedaPay: only the Hamseda page itself (main frame, our host) may use it. */
+    private inner class PayJs {
+        @JavascriptInterface
+        fun status(): String = try {
+            billing.status().toString()
+        } catch (e: Exception) {
+            "{}"
+        }
+
+        @JavascriptInterface
+        fun buy(json: String?) {
+            if (json == null || json.length > 4096) return
+            runOnUiThread {
+                if (isDestroyed || Uri.parse(webView.url ?: "").host != Config.HOST) return@runOnUiThread
+                try {
+                    handleBridgeMessage(JSONObject(json).put("t", "buy").toString())
+                } catch (e: Exception) {
+                    // ignore malformed request
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun restore() {
+            runOnUiThread {
+                if (isDestroyed || Uri.parse(webView.url ?: "").host != Config.HOST) return@runOnUiThread
+                billing.restore()
+            }
         }
     }
 
